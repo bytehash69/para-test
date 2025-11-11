@@ -59,15 +59,16 @@ bot.onText(/\/start/, (msg) => {
 	bot.sendMessage(
 		chatId,
 		`Welcome to Para Wallet Bot! 🚀
-  
-  Available commands:
-  /createwallet <phone_number> - Create a new Solana wallet
-  /balance <6_digit_key> - Check your wallet balance
-  /send <6_digit_key> <receiver> <amount> - Send SOL to an address
-  /myaddress <6_digit_key> - Get your wallet address
-  /help - Show this help message
-  
-  Example: /createwallet +1234567890`
+		
+		Available commands:
+		/createwallet <phone_number> - Create a new Solana wallet
+		/balance <6_digit_key> - Check your wallet balance
+		/send <6_digit_key> <receiver> <amount> - Send SOL to an address
+		/airdrop <6_digit_key> <amount> - Request SOL airdrop (devnet only)
+		/myaddress <6_digit_key> - Get your wallet address
+		/help - Show this help message
+		
+		Example: /createwallet +1234567890`
 	);
 });
 
@@ -77,20 +78,24 @@ bot.onText(/\/help/, (msg) => {
 	bot.sendMessage(
 		chatId,
 		`Available commands:
-  
-  /createwallet <phone_number> - Create a new Solana wallet
-  Example: /createwallet +1234567890
-  
-  /balance <6_digit_key> - Check your wallet balance
-  Example: /balance 123456
-  
-  /send <6_digit_key> <receiver> <amount> - Send SOL
-  Example: /send 123456 ABC...XYZ 0.1
-  
-  /myaddress <6_digit_key> - Get your wallet address
-  Example: /myaddress 123456
-  
-  Note: Keep your 6-digit key secret! It's required for all wallet operations.`
+		
+		/createwallet <phone_number> - Create a new Solana wallet
+		Example: /createwallet +1234567890
+		
+		/balance <6_digit_key> - Check your wallet balance
+		Example: /balance 123456
+		
+		/send <6_digit_key> <receiver> <amount> - Send SOL
+		Example: /send 123456 ABC...XYZ 0.1
+
+		/airdrop <6_digit_key> <amount> - Request SOL airdrop
+		Example: /airdrop 123456 1
+		Note: Works only on devnet. Max 5 SOL per request.
+		
+		/myaddress <6_digit_key> - Get your wallet address
+		Example: /myaddress 123456
+		
+		Note: Keep your 6-digit key secret! It's required for all wallet operations.`
 	);
 });
 
@@ -117,10 +122,10 @@ bot.onText(/\/createwallet(?:\s+(.+))?/, async (msg, match) => {
 			bot.sendMessage(
 				chatId,
 				`You already created a wallet with this phone number!
-  
-  🔑 Your 6-digit key: ${existingKey}
-  
-  Use this key for all operations.`
+				
+				🔑 Your 6-digit key: ${existingKey}
+				
+				Use this key for all operations.`
 			);
 			return;
 		}
@@ -165,18 +170,19 @@ bot.onText(/\/createwallet(?:\s+(.+))?/, async (msg, match) => {
 		bot.sendMessage(
 			chatId,
 			`✅ Wallet created successfully!
-  
-  📱 Phone: ${phoneNumber}
-  📍 Address: ${pregenWallet.address}
-  
-  🔑 Your 6-digit key: ${key}
-  
-  ⚠️ IMPORTANT: Save this key securely!
-  You need it for all operations (balance, send, etc.)
-  
-  Example usage:
-  /balance ${key}
-  /send ${key} <receiver_address> <amount>`
+			
+			📱 Phone: ${phoneNumber}
+			📍 Address: ${pregenWallet.address}
+			
+			🔑 Your 6-digit key: ${key}
+			
+			⚠️ IMPORTANT: Save this key securely!
+			You need it for all operations (balance, send, etc.)
+			
+			Example usage:
+			/balance ${key}
+			/airdrop ${key} 1
+			/send ${key} <receiver_address> <amount>`
 		);
 	} catch (error) {
 		console.error("Error creating wallet:", error);
@@ -228,7 +234,7 @@ bot.onText(/\/myaddress(?:\s+(.+))?/, async (msg, match) => {
 		bot.sendMessage(
 			chatId,
 			`📍 Your Solana address:
-  ${solanaSigner.sender.toBase58()}`
+			${solanaSigner.sender.toBase58()}`
 		);
 	} catch (error) {
 		console.error("Error getting address:", error);
@@ -286,7 +292,7 @@ bot.onText(/\/balance(?:\s+(.+))?/, async (msg, match) => {
 			chatId,
 			`💰 Your balance: ${solBalance} SOL
   
-  📍 Address: ${solanaSigner.sender.toBase58()}`
+📍 Address: ${solanaSigner.sender.toBase58()}`
 		);
 	} catch (error) {
 		console.error("Error getting balance:", error);
@@ -295,6 +301,110 @@ bot.onText(/\/balance(?:\s+(.+))?/, async (msg, match) => {
 			`Error retrieving balance: ${
 				error instanceof Error ? error.message : "Unknown error"
 			}`
+		);
+	}
+});
+
+// Command: /airdrop <6_digit_key> <amount>
+bot.onText(/\/airdrop(?:\s+(.+))?/, async (msg, match) => {
+	const chatId = msg.chat.id;
+
+	const args = match?.[1]?.trim();
+
+	if (!args) {
+		bot.sendMessage(
+			chatId,
+			"Usage: /airdrop <6_digit_key> <amount>\n\nExample: /airdrop 123456 1\n\nNote: Max 5 SOL per request (devnet only)"
+		);
+		return;
+	}
+
+	const parts = args.split(/\s+/);
+
+	if (parts.length < 2) {
+		bot.sendMessage(
+			chatId,
+			"Invalid format. Usage: /airdrop <6_digit_key> <amount>"
+		);
+		return;
+	}
+
+	const key = parts[0];
+	//@ts-ignore
+	const amount = parseFloat(parts[1]);
+
+	if (isNaN(amount) || amount <= 0) {
+		bot.sendMessage(
+			chatId,
+			"Error: Invalid amount. Please provide a valid number."
+		);
+		return;
+	}
+
+	if (amount > 5) {
+		bot.sendMessage(
+			chatId,
+			"Error: Maximum airdrop amount is 5 SOL per request."
+		);
+		return;
+	}
+
+	try {
+		//@ts-ignore
+		const userShare = userShareStore.get(key);
+
+		if (!userShare) {
+			bot.sendMessage(
+				chatId,
+				"Invalid key. Please check your 6-digit key and try again."
+			);
+			return;
+		}
+
+		bot.sendMessage(chatId, "Requesting airdrop... ⏳");
+
+		const para = new ParaServer(PARA_ENVIRONMENT, PARA_API_KEY);
+		await para.setUserShare(userShare);
+
+		const connection = new Connection(clusterApiUrl("devnet"));
+		const solanaSigner = new ParaSolanaWeb3Signer(para, connection);
+
+		if (!solanaSigner.sender) {
+			bot.sendMessage(chatId, "Error: Could not initialize wallet.");
+			return;
+		}
+
+		// Request airdrop
+		const signature = await connection.requestAirdrop(
+			solanaSigner.sender,
+			amount * LAMPORTS_PER_SOL
+		);
+
+		// Confirm transaction
+		await connection.confirmTransaction(signature);
+
+		// Get new balance
+		const balance = await connection.getBalance(solanaSigner.sender);
+		const solBalance = balance / LAMPORTS_PER_SOL;
+
+		bot.sendMessage(
+			chatId,
+			`✅ Airdrop successful!
+			
+			💰 Received: ${amount} SOL
+			📍 Address: ${solanaSigner.sender.toBase58()}
+			💳 New balance: ${solBalance} SOL
+			
+			Signature: ${signature}
+			View on explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`
+		);
+	} catch (error) {
+		console.error("Error requesting airdrop:", error);
+		bot.sendMessage(
+			chatId,
+			`Error requesting airdrop: ${
+				error instanceof Error ? error.message : "Unknown error"
+			}\n\nNote: Airdrops only work on devnet. If you're getting rate-limited, please try again in a few minutes.`
 		);
 	}
 });
@@ -394,13 +504,13 @@ bot.onText(/\/send(?:\s+(.+))?/, async (msg, match) => {
 		bot.sendMessage(
 			chatId,
 			`✅ Transaction successful!
-  
-  Sent: ${amount} SOL
-  From: ${solanaSigner.sender.toBase58()}
-  To: ${receiver}
-  Signature: ${signature}
-  
-  View on explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`
+			
+			Sent: ${amount} SOL
+			From: ${solanaSigner.sender.toBase58()}
+			To: ${receiver}
+			Signature: ${signature}
+			
+			View on explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`
 		);
 	} catch (error) {
 		console.error("Error sending transaction:", error);
