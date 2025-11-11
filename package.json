@@ -2,11 +2,13 @@
 	"name": "para",
 	"version": "1.0.0",
 	"description": "",
-	"main": "bot.ts",
+	"main": "*.ts",
 	"scripts": {
-		"dev": "npm run build && npm run start",
 		"build": "tsc -b",
-		"start": "node dist/bot.js"
+		"start:server": "node dist/index.js",
+		"start:bot": "node dist/bot.js",
+		"server": "npm run build && npm run start:server",
+		"bot": "npm run build && npm run start:bot"
 	},
 	"keywords": [],
 	"author": "",
