@@ -1,28 +1,30 @@
 {
-  "name": "para",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "dev": "npm run build && npm run start",
-    "build": "tsc -b",
-    "start": "node dist/index.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "dependencies": {
-    "@getpara/server-sdk": "^1.18.1",
-    "@getpara/solana-web3.js-v1-integration": "^1.18.1",
-    "@solana/web3.js": "^1.98.4",
-    "@types/express": "^5.0.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0"
-  },
-  "devDependencies": {
-    "@types/node": "^24.10.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
-  }
+	"name": "para",
+	"version": "1.0.0",
+	"description": "",
+	"main": "bot.ts",
+	"scripts": {
+		"dev": "npm run build && npm run start",
+		"build": "tsc -b",
+		"start": "node dist/bot.js"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "module",
+	"dependencies": {
+		"@getpara/server-sdk": "^1.18.1",
+		"@getpara/solana-web3.js-v1-integration": "^1.18.1",
+		"@solana/web3.js": "^1.98.4",
+		"@types/express": "^5.0.5",
+		"dotenv": "^17.2.3",
+		"express": "^5.1.0",
+		"node-telegram-bot-api": "^0.66.0"
+	},
+	"devDependencies": {
+		"@types/node": "^24.10.0",
+		"@types/node-telegram-bot-api": "^0.64.12",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.9.3"
+	}
 }
